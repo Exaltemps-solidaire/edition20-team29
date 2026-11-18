@@ -149,7 +149,7 @@ export type Bloc =
   | { type: "ressource"; cle: string; ressource: Ressource }
   | { type: "checklist"; cle: string; titre: string; items: string[] }
   | { type: "encadre"; cle: string; titre: string; texte: string }
-  | { type: "choix-nav"; cle: string; demarche: Demarche };
+  | { type: "choix-nav"; cle: string; demarche?: Demarche };
 
 export function construireFil(
   choix: Entree | null,
@@ -180,6 +180,7 @@ export function construireFil(
       cle: "generique",
       texte: "Écran à venir — ce parcours sera construit dans une prochaine itération.",
     });
+    fil.push({ type: "choix-nav", cle: "choix-nav-generique" });
     return fil;
   }
 

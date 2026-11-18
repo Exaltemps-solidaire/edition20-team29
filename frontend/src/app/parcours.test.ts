@@ -20,13 +20,14 @@ describe("construireFil", () => {
     expect(fil.at(-1)).toEqual({ type: "choix-nav", cle: "choix-nav-ald", demarche: "ald" });
   });
 
-  it("mène à l'écran générique pour les autres entrées", () => {
+  it("mène à l'écran générique pour les autres entrées, avec une navigation", () => {
     const fil = construireFil("perdue", null, null);
-    expect(fil.at(-1)).toEqual({
+    expect(fil.at(-2)).toEqual({
       type: "bot",
       cle: "generique",
       texte: "Écran à venir — ce parcours sera construit dans une prochaine itération.",
     });
+    expect(fil.at(-1)).toEqual({ type: "choix-nav", cle: "choix-nav-generique" });
   });
 });
 

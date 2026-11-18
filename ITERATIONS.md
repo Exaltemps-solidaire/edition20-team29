@@ -143,6 +143,12 @@
     - `frontend/src/app/page.tsx` : nouvel état `demarche`, rendu des nouveaux types de blocs, `reinitialiser` étendu.
     - `frontend/src/app/page.module.css` : styles `.resourceCard`/`.resourceLabel`/`.resourceTitre`/`.resourceDesc`/`.checklistBox`/`.checklistTitre`/`.checklist`.
     - `e2e/demo.spec.ts` : étapes supplémentaires jusqu'à la checklist et au retour accueil.
+  - **Correction signalée par le développeur** (même itération, temps restant réutilisé) : sur l'écran générique « Écran à venir » (entrées « perdue »/« soignant », pas encore construites), le fil s'arrêtait net — seul le petit lien d'en-tête « ← Retour » permettait de revenir, aucune action dans le fil lui-même. Demande du développeur : quelle que soit l'étape, construite ou non, il faut toujours un moyen de revenir en arrière ou à l'accueil, dans le fil.
+    - Correction : le bloc de navigation (`choix-nav`), jusque-là réservé à la fin d'une démarche « droits », est généralisé (`demarche` devient optionnel) et ajouté aussi après l'écran générique, avec « ↩️ Choisir une autre entrée » + « 🏠 Revenir à l'accueil ».
+    - Test ajouté : l'écran générique se termine désormais par ce bloc `choix-nav` (`frontend/src/app/parcours.test.ts`). `npm test` : 6/6.
+    - **Modifications** : `frontend/src/app/parcours.ts` (type `choix-nav` généralisé, bloc ajouté après l'écran générique), `frontend/src/app/parcours.test.ts` (test mis à jour), `frontend/src/app/page.tsx` (rendu conditionnel du bouton de retour selon la présence de `demarche`), `e2e/demo.spec.ts` (étape ajoutée : écran générique → retour accueil).
+    - Déploiement : rebuild/push/`compose up --force-recreate frontend` ; `/health` (8080) et `/health` (8081) répondent 200 ; vérifié en Playwright headless que les deux cas (écran générique et fin de démarche) offrent bien la navigation.
+    - Durée de codage de la correction : environ 2 minutes, dans le temps restant de l'itération 4 — pas une nouvelle itération.
 
 ## ⚠️ ✂️ Ce qui sort très probablement du temps de ce build
 

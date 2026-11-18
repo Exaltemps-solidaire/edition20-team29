@@ -126,10 +126,17 @@ export default function Home() {
                       Voir aussi : médecine du travail
                     </button>
                   )}
-                  <button className={styles.choiceBtn} onClick={() => setDemarche(null)}>
-                    <span className={styles.choiceIcon}>↩️</span>
-                    Voir une autre démarche
-                  </button>
+                  {bloc.demarche ? (
+                    <button className={styles.choiceBtn} onClick={() => setDemarche(null)}>
+                      <span className={styles.choiceIcon}>↩️</span>
+                      Voir une autre démarche
+                    </button>
+                  ) : (
+                    <button className={styles.choiceBtn} onClick={() => setChoix(null)}>
+                      <span className={styles.choiceIcon}>↩️</span>
+                      Choisir une autre entrée
+                    </button>
+                  )}
                   <button className={styles.choiceBtn} onClick={reinitialiser}>
                     <span className={styles.choiceIcon}>🏠</span>
                     Revenir à l&apos;accueil

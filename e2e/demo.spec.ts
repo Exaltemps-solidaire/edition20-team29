@@ -34,4 +34,11 @@ test("Démo : le cas passant", async ({ page }) => {
     await page.getByRole("button", { name: /Revenir à l'accueil/ }).click();
     await expect(page.getByRole("button", { name: /faire valoir mes droits/ })).toBeVisible();
   });
+
+  await test.step("Même sur un écran pas encore construit, je peux revenir à l'accueil", async () => {
+    await page.getByText("suis perdue").click();
+    await expect(page.getByText("Écran à venir")).toBeVisible();
+    await page.getByRole("button", { name: /Revenir à l'accueil/ }).click();
+    await expect(page.getByRole("button", { name: /faire valoir mes droits/ })).toBeVisible();
+  });
 });
