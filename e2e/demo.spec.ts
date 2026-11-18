@@ -19,8 +19,19 @@ test("Démo : le cas passant", async ({ page }) => {
     await expect(page.getByRole("button", { name: /salariée dans le secteur privé/ })).toBeVisible();
   });
 
-  await test.step("Je choisis mon profil", async () => {
+  await test.step("Je choisis mon profil et je vois la question des étapes déjà réalisées", async () => {
     await page.getByRole("button", { name: /salariée dans le secteur privé/ }).click();
-    await expect(page.getByText("Écran à venir")).toBeVisible();
+    await expect(page.getByText("Qu'avez-vous déjà fait")).toBeVisible();
+  });
+
+  await test.step("Je choisis « par où commencer » et je vois la checklist et les fiches ENDOmind", async () => {
+    await page.getByRole("button", { name: /par où commencer/ }).click();
+    await expect(page.getByText("Fiche ALD 31 · Endométriose")).toBeVisible();
+    await expect(page.getByText("Check-list · Salariée secteur privé")).toBeVisible();
+  });
+
+  await test.step("Je reviens à l'accueil", async () => {
+    await page.getByRole("button", { name: /Revenir à l'accueil/ }).click();
+    await expect(page.getByRole("button", { name: /faire valoir mes droits/ })).toBeVisible();
   });
 });

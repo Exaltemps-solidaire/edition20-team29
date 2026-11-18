@@ -1,7 +1,8 @@
 # Plan d'itérations — ENDOmind, chatbot arborescent
 
 - **Source du plan** : proposé par l'agent (aucun plan d'itérations trouvé dans la passation : `cadrage/2-idees-priorisees.md` et `5-hypotheses.md` sont « Pas encore produit », pas de clé `iterations` dans `passation.json`). Le `cadrage/6-plan-de-livraison.md` de l'équipe donne l'ordre des trois parcours, repris ci-dessous.
-- **Temps restant annoncé** : 30 minutes (demandé le 2026-11-18 à 16:43) ; re-demandé au début de l'itération 1 : 20 minutes (16:49). La plateforme n'était alors pas encore totalement démarrée (`postgres.internal` pas encore `healthy`). Re-demandé à la clôture de l'itération 1 (le blocage Docker Hub a consommé du temps réel non compté dans les 20 min) : **10 à 20 minutes**.
+- **Temps restant annoncé** : 30 minutes (demandé le 2026-11-18 à 16:43) ; re-demandé au début de l'itération 1 : 20 minutes (16:49). La plateforme n'était alors pas encore totalement démarrée (`postgres.internal` pas encore `healthy`). Re-demandé à la clôture de l'itération 1 (le blocage Docker Hub a consommé du temps réel non compté dans les 20 min) : **10 à 20 minutes**. Re-demandé avant l'itération 4 (pivot ci-dessous) : toujours **10 à 20 minutes**.
+- ⚠️ **Changement de priorité demandé par le développeur, à valider par les cadreurs** : au lieu d'avancer les trois parcours en parallèle, le reste du temps se concentre sur un parcours « mes droits » complet et convaincant (Situation → Étapes réalisées → Par où commencer / ALD 31 / RQTH-MDPH / Médecine du travail, avec vraies fiches et checklists ENDOmind). Les parcours « je suis perdue », « trouver un soignant », le lexique et le RAG passent après, voir « À venir ». Avec 10 à 20 minutes restantes, une seule itération de ce calibre est réaliste (codage + publication + tour de test) : elle fait tout le parcours d'un coup plutôt que de le découper, pour ne pas perdre de temps en publications intermédiaires.
 - **Tour de test de l'équipe** : 5 minutes.
 - **Plan validé** le 2026-11-18 par le développeur (« très bien, lance le conteneur »).
 - **Hors périmètre (toutes itérations)** : intégration WhatsApp, affichage de soignants nommés, encart événement géolocalisé, connexion/comptes, suivi dans le temps (rappels, journal), mise à jour du contenu des ressources par l'association. Ces points sont explicitement écartés par `PASSATION.md` (« Hors périmètre »).
@@ -110,16 +111,43 @@
     - `frontend/src/app/parcours.test.ts` : 4 tests sur `construireFil`, dont la non-régression de l'historique déjà affiché.
     - `frontend/src/app/page.tsx` : rendu par `fil.map(...)` qui empile tous les blocs au lieu de switcher sur une étape ; bouton retour conditionné sur `choix !== null`.
 
-## Itération 4 (indicative, à détailler après l'itération 3) : parcours Mes droits — écran Étapes réalisées
+## Itération 4 : le parcours « mes droits » va jusqu'au bout, avec les vraies ressources ENDOmind
 
-⚠️ À valider par les cadreurs. Reprend `screen-8` du prototype : depuis l'écran Situation, après le choix d'un profil, demander « Qu'avez-vous déjà fait ? » (boutons fermés, ex. « Je n'ai rien fait encore »), sans encore brancher le RAG (ressources toujours en dur ou différées). Codage estimé 5 minutes — à confirmer selon le temps restant au prochain `/iteration`.
+- **Source** : pivot demandé par le développeur — concentrer le temps restant sur un seul parcours complet et convaincant plutôt que sur plusieurs parcours partiels. Temps restant redemandé : 10 à 20 minutes ⇒ une seule itération, qui couvre tout le parcours d'un coup pour ne pas perdre de temps en publications intermédiaires.
+- **Dans le périmètre** (reprend `screen-8`, `9a`, `9b`, `9c`, `9d` du prototype) :
+  - Après le choix du profil (écran Situation), le bot demande « Qu'avez-vous déjà fait ? » avec 4 choix fermés : rien encore / déjà ALD 31 / RQTH-MDPH / médecine du travail.
+  - Chacun des 4 choix affiche le vrai contenu ENDOmind (texte d'intro, fiches/livrets en « resource card », checklist), repris mot pour mot du prototype — plus de placeholder « écran à venir » sur ce parcours.
+  - Navigation de fin : « Voir une autre démarche » (revient au choix des 4 étapes) et « Revenir à l'accueil » (réinitialise tout le fil) ; en plus, depuis RQTH/MDPH, un lien « Voir aussi : médecine du travail » (seul lien du prototype qui pointe vers un écran que ce build construit aussi, donc non mort).
+  - ❗️ Simplification assumée faute de contenu spécifique dans la passation : le texte « par où commencer » (screen 9a) varie selon le profil choisi (nom + checklist titrée), mais la checklist elle-même est celle, unique, écrite pour « salariée » dans le prototype — rien dans `PASSATION.md` ne donne de variante par profil.
+- **Hors périmètre** : le lien du prototype vers « Trouver un·e soignant·e formé·e » (screen-5, non construit — omis pour ne pas créer de lien mort) ; le RAG (les fiches restent en dur) ; les parcours « je suis perdue » et « trouver un soignant », le lexique, l'écran « Qui êtes-vous ? » — reportés, voir « À venir ».
+- **Critères d'acceptation** :
+  - Étant donné un profil choisi, quand le fil continue, alors la question « Qu'avez-vous déjà fait ? » et ses 4 choix apparaissent sous l'historique existant (rien n'est effacé).
+  - Étant donné chacun des 4 choix, quand on clique dessus, alors le vrai contenu ENDOmind (resource card(s) + checklist) s'affiche, identique au texte du prototype pour cette branche.
+  - Étant donné un contenu final affiché, quand on clique « Revenir à l'accueil », alors le fil est réinitialisé à l'écran d'accueil.
+- **Hypothèse de l'équipe couverte** : « le simulateur de situation permet de savoir précisément s'il faut demander une ALD 31, un dossier MDPH ou voir la médecine du travail » — couverte pour la branche choisie, pas encore mesurée (pas d'instrumentation prévue ce build).
+- **Codage estimé** : 10 minutes (plafond — contenu volumineux mais généré depuis une seule table de données, pas 4 écrans écrits à la main).
+- **Fichiers prévus** : `frontend/src/app/parcours.ts`, `frontend/src/app/parcours.test.ts`, `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css`.
+- **Tests unitaires prévus** : 2 à 3 tests sur la fonction qui construit le contenu d'une démarche à partir de `(demarche, profil)` (bonnes ressources, bon titre de checklist selon le profil).
+- **Étapes ajoutées à la démo** : accueil → mes droits → profil → « je n'ai rien fait encore » → vérifier que la checklist et les fiches s'affichent.
+- **Bilan** :
+  - Durée de codage réelle : **1 minute**.
+  - Critères satisfaits : la question « Qu'avez-vous déjà fait ? » et ses 4 choix s'ajoutent sous l'historique après le profil ; chacun des 4 choix affiche le vrai texte ENDOmind (intro, resource card(s), checklist) repris du prototype, plus `voirAussiMedecineDuTravail` pour relier RQTH → médecine du travail sans lien mort ; « Revenir à l'accueil » vide tout le fil (`reinitialiser`).
+  - Tests : 4 tests sur `construireFil` (dont la non-régression de l'historique, la présence de la checklist et de la navigation finale) + 2 tests sur `contenuDemarche` (titre de checklist selon le profil, lien conditionnel RQTH → médecine du travail). `npm test` passe (2 + 6 tests).
+  - Démo e2e mise à jour et vérifiée en headless (contrainte d'environnement : `--headed` échoue sur cette VM sans serveur X, sans rapport avec l'app) : accueil → droits → profil → « par où commencer » → checklist et fiches visibles → retour accueil.
+  - Déploiement : seule l'image frontend avait changé ; rebuild/push/`compose up --force-recreate frontend`. `/health` et `/sante` (8080) répondent 200.
+  - Rien reporté sur le périmètre de cette itération : les 3 critères sont satisfaits.
+  - Ce que le harnais a bloqué : rien.
+  - **Modifications** :
+    - `frontend/src/app/parcours.ts` : ajoute `Demarche`, `ETAPES`, `contenuDemarche` (table de données des 4 démarches, reprise mot pour mot du prototype `9a`-`9d`) et étend `construireFil`/`Bloc` avec les blocs `choix-etapes`, `ressource`, `checklist`, `encadre`, `choix-nav`.
+    - `frontend/src/app/parcours.test.ts` : 6 tests (4 sur `construireFil`, 2 sur `contenuDemarche`).
+    - `frontend/src/app/page.tsx` : nouvel état `demarche`, rendu des nouveaux types de blocs, `reinitialiser` étendu.
+    - `frontend/src/app/page.module.css` : styles `.resourceCard`/`.resourceLabel`/`.resourceTitre`/`.resourceDesc`/`.checklistBox`/`.checklistTitre`/`.checklist`.
+    - `e2e/demo.spec.ts` : étapes supplémentaires jusqu'à la checklist et au retour accueil.
 
 ## ⚠️ ✂️ Ce qui sort très probablement du temps de ce build
 
-Avec 30 minutes et un premier déploiement à faire, le programme complet ne tient pas. Liste ordonnée, à détailler au fil de l'eau si du temps reste après l'itération 1 :
+Avec le temps restant concentré sur le parcours droits, le reste ne tient plus dans ce build. Liste ordonnée, à reprendre si du temps reste après l'itération 4 :
 
-- Mes droits – écran Par où commencer
-- Mes droits – fiche ALD 31 / RQTH-MDPH / Médecine du travail + questions à poser au gynécologue
 - Parcours Trouver un soignant – écran Région (filtre carte des filières de soins)
 - Parcours Trouver un soignant – écran Résultats (filière régionale, sans nom de soignant)
 - Parcours Je suis perdue – branches Fertilité, Douleur quotidienne, Opération

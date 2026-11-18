@@ -105,6 +105,58 @@
   font-size: 18px;
 }
 
+.resourceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #f3c6d4;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.resourceLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9184a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.resourceTitre {
+  font-weight: 700;
+}
+
+.resourceDesc {
+  font-size: 14px;
+  color: #555;
+}
+
+.checklistBox {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.checklistTitre {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9184a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.checklist {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  line-height: 1.4;
+}
+
 .encadreSensible {
   margin-top: auto;
   background: #fff5f8;
