@@ -63,13 +63,31 @@
 - **Fichiers prévus** : 1 nouvel écran front, éventuel fichier de données en dur pour les profils.
 - **Tests unitaires prévus** : 1 test sur la fonction de sélection du profil si elle contient une règle (ex. normalisation de la saisie), sinon aucun.
 - **Étapes ajoutées à la démo** : accueil → clic « mes droits » → écran Situation visible.
-- **Bilan** : _à remplir en fin d'itération_
+- **Bilan** :
+  - Temps restant redemandé au début (16:26) : 10 à 20 minutes. Pas de dépassement du budget de codage.
+  - Durée de codage réelle : **1 minute**.
+  - Critères satisfaits : depuis l'accueil, le clic sur « faire valoir mes droits » affiche l'écran Situation avec les 4 profils (salariée, étudiante, fonctionnaire, indépendante), reprenant le texte du prototype (`screen-7`) ; le choix d'un profil n'ouvre aucune question ouverte (boutons uniquement), mène à un écran « à venir » explicite (pas de lien mort) ; `verifier-deployabilite.sh` ne signale toujours aucune borne.
+  - Tests : la logique de routage entre écrans (`etapeCourante`) est extraite dans `frontend/src/app/parcours.ts` et couverte par 4 tests Vitest (`parcours.test.ts`) ; `npm test` passe (2 + 4 tests).
+  - Déploiement : build/push/`compose up --force-recreate` des deux images, tous les health checks locaux (8080 et 8081, `/health` et `/sante`) répondent 200.
+  - Signal PM Lab : `./scripts/signaler-version.sh 2` exécuté avec succès (version 2 enregistrée).
+  - Point 5 (en ligne sur `$URL_PUBLIQUE`) non vérifié par le harnais, comme prévu : à confirmer par le développeur dans son navigateur.
+  - Rien reporté sur le périmètre de cette itération : les 2 critères sont satisfaits.
+  - Ce que le harnais a bloqué : rien.
+  - **Modifications** :
+    - `frontend/src/app/parcours.ts` : types `Entree`/`Profil`/`Etape`, listes `ENTREES`/`PROFILS` en dur, fonction pure `etapeCourante` (routage accueil → situation → suite). Sert les 2 critères d'acceptation.
+    - `frontend/src/app/parcours.test.ts` : 4 tests Vitest sur `etapeCourante`.
+    - `frontend/src/app/page.tsx` : remplace le `choix` unique par un petit automate d'écrans (accueil / situation droits / suite droits / générique) avec bouton retour ; réutilise `parcours.ts`.
+    - `frontend/src/app/page.module.css` : styles `.bubbleUser` (bulle utilisateur) et `.backBtn` (retour).
+    - `ITERATIONS.md` : bilan de l'itération 1 corrigé (le blocage Docker Hub avait été résolu après la rédaction initiale), temps restant redemandé, bilan de l'itération 2.
+
+## Itération 3 (indicative, à détailler après l'itération 2) : parcours Mes droits — écran Étapes réalisées
+
+⚠️ À valider par les cadreurs. Reprend `screen-8` du prototype : depuis l'écran Situation, après le choix d'un profil, demander « Qu'avez-vous déjà fait ? » (boutons fermés, ex. « Je n'ai rien fait encore »), sans encore brancher le RAG (ressources toujours en dur ou différées). Codage estimé 5 minutes — à confirmer selon le temps restant au prochain `/iteration`.
 
 ## ⚠️ ✂️ Ce qui sort très probablement du temps de ce build
 
 Avec 30 minutes et un premier déploiement à faire, le programme complet ne tient pas. Liste ordonnée, à détailler au fil de l'eau si du temps reste après l'itération 1 :
 
-- Mes droits – écran Étapes réalisées
 - Mes droits – écran Par où commencer
 - Mes droits – fiche ALD 31 / RQTH-MDPH / Médecine du travail + questions à poser au gynécologue
 - Parcours Trouver un soignant – écran Région (filtre carte des filières de soins)
