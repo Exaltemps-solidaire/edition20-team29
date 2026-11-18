@@ -1,7 +1,7 @@
 # Plan d'itérations — ENDOmind, chatbot arborescent
 
 - **Source du plan** : proposé par l'agent (aucun plan d'itérations trouvé dans la passation : `cadrage/2-idees-priorisees.md` et `5-hypotheses.md` sont « Pas encore produit », pas de clé `iterations` dans `passation.json`). Le `cadrage/6-plan-de-livraison.md` de l'équipe donne l'ordre des trois parcours, repris ci-dessous.
-- **Temps restant annoncé** : 30 minutes (demandé le 2026-11-18 à 16:43) ; re-demandé au début de l'itération 1 : 20 minutes (16:49). La plateforme n'était alors pas encore totalement démarrée (`postgres.internal` pas encore `healthy`).
+- **Temps restant annoncé** : 30 minutes (demandé le 2026-11-18 à 16:43) ; re-demandé au début de l'itération 1 : 20 minutes (16:49). La plateforme n'était alors pas encore totalement démarrée (`postgres.internal` pas encore `healthy`). Re-demandé à la clôture de l'itération 1 (le blocage Docker Hub a consommé du temps réel non compté dans les 20 min) : **10 à 20 minutes**.
 - **Tour de test de l'équipe** : 5 minutes.
 - **Plan validé** le 2026-11-18 par le développeur (« très bien, lance le conteneur »).
 - **Hors périmètre (toutes itérations)** : intégration WhatsApp, affichage de soignants nommés, encart événement géolocalisé, connexion/comptes, suivi dans le temps (rappels, journal), mise à jour du contenu des ressources par l'association. Ces points sont explicitement écartés par `PASSATION.md` (« Hors périmètre »).
@@ -33,11 +33,14 @@
 - **Étapes ajoutées à la démo** : ouvrir l'accueil, vérifier que les trois boutons sont affichés.
 - **Bilan** :
   - Durée de codage réelle : **1 minute** (budget 8 min non atteint, aucun dépassement).
-  - Critères satisfaits : accueil avec les 3 boutons (✅, testé en local via `npx next dev` non lancé — vérifié par lecture, pas d'accès navigateur sur cette machine) ; `/api/health` répond déjà 200 en local (route déjà posée par le gabarit, inchangée) ; `verifier-deployabilite.sh` ne signale plus aucune alarme `.env.example`/`DEPLOIEMENT.md`.
-  - ❗️ **Critère non vérifiable en ligne et DoD points 4–6 non atteints** : la plateforme (`/srv/team29/core-platform`) est bloquée par la limite anonyme de pulls Docker Hub (`toomanyrequests`). `registry.internal` et `postgres.internal` n'ont pas pu démarrer dans cette fenêtre de build (confirmé par deux tentatives de pull ciblées, échouées après 3 essais chacune). Sans `registry.internal`, impossible de pousser `localhost:5000/team29/...` ; sans `postgres.internal`, impossible de créer la base `team29`. Le reste de la plateforme a fini par démarrer (`valkey`, `openbao`, `dozzle`, `apisix`).
-  - Décision du développeur : retenter les deux pulls directement (fait, toujours bloqué) plutôt qu'attendre sans agir ou s'arrêter net.
-  - Reporté à l'itération suivante (toujours itération 1 au sens fonctionnel, à republier dès que la plateforme est utilisable) : construire les images, créer la base, déployer, vérifier `$URL_PUBLIQUE`, signaler la version.
-  - Ce que le harnais a bloqué : rien — c'est l'infrastructure Docker Hub, hors de ce dépôt, qui bloque ; `./scripts/signaler-version.sh 1` n'a pas été appelé puisqu'il n'y a rien de nouveau en ligne à signaler.
+  - ⚠️ Incident résolu en cours d'itération : le premier démarrage de la plateforme (`/srv/team29/core-platform`) a buté sur la limite anonyme de pulls Docker Hub (`toomanyrequests`) ; `registry.internal` et `postgres.internal` n'ont pas démarré dans le pipeline initial (deux premières tentatives de pull ciblées également bloquées, 3 essais chacune). Résolu en relançant un `podman pull` isolé pour les deux images (succès après une poignée de minutes, la limite s'étant levée), puis `podman compose up -d registry postgres` directement dans `core-platform` pour démarrer les deux services manquants sans repasser par tout le pipeline.
+  - Suite : base `team29` créée, images `api`/`frontend` construites et poussées sur `localhost:5000`, déploiement avec `podman compose -p team29 up -d --force-recreate`.
+  - Critères satisfaits : les 3 boutons d'entrée sont rendus par le front en local (`curl localhost:8080/` confirme le texte d'accueil ENDOmind et les trois libellés) ; `GET /health` et `/sante` répondent `200` sur le port 8080 (front) et directement sur l'API (8081) ; `verifier-deployabilite.sh` ne signale plus aucune alarme.
+  - Déploiement (point 4 de la DoD) : fait, suivant `/srv/team29/CLAUDE.md` (plateforme, registre local, podman-compose.yml, build/push/up).
+  - Signal PM Lab (point 6) : `./scripts/signaler-version.sh 1` exécuté avec succès (`moteur_avance: false`, version enregistrée).
+  - Point 5 (en ligne sur `$URL_PUBLIQUE`) non vérifié par le harnais, comme prévu : à confirmer par le développeur dans son navigateur (`https://edition20-team29.exaltemps-space.com/health` et `/sante`), sans que cela ait bloqué le signal.
+  - Rien reporté sur le périmètre de cette itération : les 3 critères sont satisfaits.
+  - Ce que le harnais a bloqué : rien.
   - **Modifications** :
     - `frontend/src/app/page.tsx` : écran d'accueil (trois entrées fermées + encart situation sensible), remplace le gabarit `create-next-app`. Sert le critère « 3 boutons visibles ».
     - `frontend/src/app/page.module.css` : styles de l'écran de chat (remplace les styles du gabarit).
@@ -46,7 +49,9 @@
     - `podman-compose.yml` : recette de déploiement (réseau `core-network`, ports 8080/8081). Sert le contrat de déployabilité, règle 1, et la recette du serveur.
     - `api/Dockerfile`, `frontend/Dockerfile` : images de base qualifiées `docker.io/library/...` (résolution des noms courts, recette du serveur).
 
-## Itération 2 (indicative, à revalider après l'itération 1) : parcours Mes droits — écran Situation
+## Itération 2 : parcours Mes droits — écran Situation
+
+⚠️ Reste à valider par les cadreurs (pas encore confirmée formellement, seulement dessinée à `/planifier-iterations`) ; tient dans la fenêtre de 10 à 20 minutes restantes (codage estimé 5 min, en dessous du budget).
 
 - **Dans le périmètre** : depuis le bouton « faire valoir mes droits », un écran Situation à choix fermés (salariée, étudiante, fonctionnaire, indépendante), données en dur.
 - **Hors périmètre** : les trois écrans suivants du parcours droits (Étapes réalisées, Par où commencer, ALD 31/RQTH/Médecine du travail), le RAG.
