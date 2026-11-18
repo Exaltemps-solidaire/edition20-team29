@@ -80,7 +80,37 @@
     - `frontend/src/app/page.module.css` : styles `.bubbleUser` (bulle utilisateur) et `.backBtn` (retour).
     - `ITERATIONS.md` : bilan de l'itération 1 corrigé (le blocage Docker Hub avait été résolu après la rédaction initiale), temps restant redemandé, bilan de l'itération 2.
 
-## Itération 3 (indicative, à détailler après l'itération 2) : parcours Mes droits — écran Étapes réalisées
+## Itération 3 : les échanges s'affichent en fil de conversation, sans remplacer l'écran
+
+- **Source** : demande du développeur en cours de hackathon (comportement jugé trop proche d'une navigation par écrans, pas assez « chatbot »). Validée par la demande directe du développeur ; temps restant redemandé (16:XX) : plus de 20 minutes.
+- **Dans le périmètre** :
+  - Le clic sur une entrée ou un choix n'efface plus le contenu précédent : la bulle utilisateur et la réponse du bot suivante s'ajoutent en dessous, dans le même fil défilant.
+  - Les boutons déjà utilisés à une étape passée ne sont plus actionnables une fois le choix fait (remplacés par la bulle utilisateur correspondante), mais restent visibles dans l'historique.
+  - Le bouton « Retour » réinitialise tout le fil à l'accueil (comportement inchangé, adapté au nouveau modèle).
+  - Adaptation de la logique pure de `parcours.ts` pour construire un historique (liste de tours) plutôt qu'une étape unique.
+- **Hors périmètre** : nouveau contenu métier, nouveaux parcours, RAG, scroll automatique avancé (un simple flux qui grandit suffit).
+- **Critères d'acceptation** :
+  - Étant donné l'accueil, quand je clique une entrée, alors ma réponse et la question suivante du bot apparaissent sous les bulles précédentes, qui restent affichées.
+  - Étant donné le parcours droits avancé jusqu'au choix d'un profil, quand je regarde le fil, alors j'y vois dans l'ordre : le message d'accueil, mon choix « mes droits », la question Situation, mon profil choisi, puis le message « à venir » — rien n'a disparu entre-temps.
+  - Étant donné un fil avancé, quand je clique « Retour », alors le fil est vidé et seul l'accueil est affiché.
+- **Hypothèse de l'équipe couverte** : aucune nouvelle — ajustement d'expérience utilisateur (fidélité au format chatbot), pas une fonctionnalité métier.
+- **Codage estimé** : 8 minutes.
+- **Fichiers prévus** : `frontend/src/app/parcours.ts`, `frontend/src/app/parcours.test.ts`, `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css`.
+- **Tests unitaires prévus** : la fonction pure qui construit l'historique à partir des choix (remplace/étend `etapeCourante`) ; 2 à 3 tests sur son comportement cumulatif.
+- **Étapes ajoutées à la démo** : vérifier que les bulles précédentes restent visibles après chaque choix (`e2e/demo.spec.ts` déjà assertion par assertion, sans `expect(...).not.toBeVisible()` sur les anciennes bulles — à ajuster si besoin).
+- **Bilan** :
+  - Durée de codage réelle : **1 minute**.
+  - Critères satisfaits : `construireFil` remplace `etapeCourante` et retourne la liste cumulative de blocs (bot/utilisateur/choix) ; `page.tsx` les affiche tous à chaque rendu au lieu de n'afficher que l'étape courante — plus aucune bulle ne disparaît quand on avance dans le parcours. Le bouton « Retour » vide le fil en revenant à `choix=null, profil=null`.
+  - Tests : 4 tests Vitest sur `construireFil`, dont un qui vérifie explicitement que le préfixe du fil ne change pas d'une étape à l'autre (non-régression de l'historique). `npm test` passe (2 + 4 tests).
+  - Déploiement : seule l'image frontend avait changé ; rebuild/push/`compose up --force-recreate frontend` uniquement. `/health` et `/sante` (8080) répondent 200 ; contenu vérifié par `curl`.
+  - Rien reporté sur le périmètre de cette itération : les 3 critères sont satisfaits.
+  - Ce que le harnais a bloqué : rien.
+  - **Modifications** :
+    - `frontend/src/app/parcours.ts` : remplace `Etape`/`etapeCourante` par `Bloc`/`construireFil`, qui construit l'historique complet (bot, utilisateur, choix) à partir de `(choix, profil)` au lieu d'une étape unique.
+    - `frontend/src/app/parcours.test.ts` : 4 tests sur `construireFil`, dont la non-régression de l'historique déjà affiché.
+    - `frontend/src/app/page.tsx` : rendu par `fil.map(...)` qui empile tous les blocs au lieu de switcher sur une étape ; bouton retour conditionné sur `choix !== null`.
+
+## Itération 4 (indicative, à détailler après l'itération 3) : parcours Mes droits — écran Étapes réalisées
 
 ⚠️ À valider par les cadreurs. Reprend `screen-8` du prototype : depuis l'écran Situation, après le choix d'un profil, demander « Qu'avez-vous déjà fait ? » (boutons fermés, ex. « Je n'ai rien fait encore »), sans encore brancher le RAG (ressources toujours en dur ou différées). Codage estimé 5 minutes — à confirmer selon le temps restant au prochain `/iteration`.
 
