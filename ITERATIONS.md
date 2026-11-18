@@ -150,15 +150,49 @@
     - Déploiement : rebuild/push/`compose up --force-recreate frontend` ; `/health` (8080) et `/health` (8081) répondent 200 ; vérifié en Playwright headless que les deux cas (écran générique et fin de démarche) offrent bien la navigation.
     - Durée de codage de la correction : environ 2 minutes, dans le temps restant de l'itération 4 — pas une nouvelle itération.
 
+## Itération 5 : le parcours « Trouver un soignant » va jusqu'aux ressources régionales
+
+- **Source** : temps restant redemandé avant planification : **10 à 20 minutes**. Suite logique de l'ordre de priorité de l'équipe (`cadrage/6-plan-de-livraison.md`, parcours n°2, juste après « Mes droits »).
+- **Dans le périmètre** (reprend `screen-5`, `screen-6` du prototype) :
+  - Depuis l'entrée « Je cherche un·e soignant·e formé·e », le bot demande la région (13 choix fermés, repris du prototype).
+  - Une fois la région choisie, le bot affiche les ressources ENDOmind de la filière régionale : carte des filières (centres de référence/compétences) et groupes de parole, suivies du rappel qu'ENDOmind ne recommande pas de soignant individuel.
+  - Navigation de fin : « Revenir à l'accueil » et « Je veux aussi faire valoir mes droits » (bascule vers le parcours droits déjà construit, sans lien mort), reprises du prototype (screen-6).
+  - ❗️ Simplification 1 : la question « avez-vous déjà consulté un·e soignant·e » (qui distingue niveau 1/2/3 dans le prototype) est omise — une seule réponse par région, pour tenir le budget. Signalé pour arbitrage si le temps le permet plus tard.
+  - ❗️ Simplification 2 : le contenu des ressources est générique (seul le nom de la région change dans le texte) — la passation ne détaille que l'Île-de-France (adresses, hôpitaux, date de groupe de parole), aucune donnée par région n'existe pour les 12 autres.
+  - ❗️ Écart assumé avec le prototype, conforme à la décision déjà actée par l'équipe : le prototype (screen-6) affiche deux soignant·es nommé·es avec adresse et lien de prise de rendez-vous ; **ceci n'est pas repris**, car `affichage de soignants nommés` est explicitement hors périmètre (voir l'en-tête de ce document, et `cadrage/6-plan-de-livraison.md` : « sans nommer de soignant individuel »).
+- **Hors périmètre** : la différenciation niveau 1/2/3, les données réelles par région (hors Île-de-France), le RAG (ressources en dur) — voir « À venir ».
+- **Critères d'acceptation** :
+  - Étant donné l'entrée « soignant » choisie, quand le fil continue, alors la liste des régions apparaît sous l'historique existant (rien n'est effacé).
+  - Étant donné une région choisie, quand le fil continue, alors les ressources ENDOmind (carte des filières, groupes de parole) et le rappel « pas de soignant nommé » s'affichent.
+  - Étant donné le résultat affiché, quand on clique « Je veux aussi faire valoir mes droits », alors le parcours droits démarre (sans perdre l'historique) ; quand on clique « Revenir à l'accueil », le fil est réinitialisé.
+- **Hypothèse de l'équipe couverte** : « la patiente obtient une filière de soins régionale sans sortir du chatbot ».
+- **Codage estimé** : 10 minutes (plafond). Profite du refactor de navigation de la correction précédente (bloc `choix-nav` déjà généralisé) pour brancher le nouveau cas sans dupliquer la logique.
+- **Fichiers prévus** : `frontend/src/app/parcours.ts`, `frontend/src/app/parcours.test.ts`, `frontend/src/app/page.tsx`.
+- **Tests unitaires prévus** : 2 tests sur `construireFil` (s'arrête sur le choix de région tant qu'elle n'est pas choisie ; affiche les ressources + la navigation une fois la région choisie).
+- **Étapes ajoutées à la démo** : accueil → « je cherche un·e soignant·e » → choisir une région → vérifier que les ressources s'affichent → retour accueil.
+- **Bilan** :
+  - Durée de codage réelle : **1 minute**.
+  - Critères satisfaits : les 13 régions s'affichent sous l'historique après le choix « soignant » ; une fois la région choisie, la carte des filières et les groupes de parole s'affichent (titre personnalisé par région) avec le rappel « pas de soignant nommé » ; « Je veux aussi faire valoir mes droits » bascule vers le parcours droits sans perdre l'historique, « Revenir à l'accueil » réinitialise tout.
+  - Refactor de navigation : le bloc `choix-nav` passe d'un champ `demarche` ad hoc à une liste générique `options` (action/icône/label), ce qui a permis de brancher le nouveau cas « soignant » sans dupliquer la logique de clic (`declencherNav` dans `page.tsx`), et sert aussi la navigation de l'écran générique et de fin de démarche de la correction précédente.
+  - Tests : 2 tests nouveaux sur `construireFil` (arrêt sur le choix de région, ressources + navigation une fois la région choisie) + 2 tests existants adaptés à la nouvelle forme `options`. `npm test` : 8/8.
+  - Démo e2e mise à jour (étape « soignant » insérée) et vérifiée en headless (même contrainte d'environnement que les itérations précédentes pour `--headed`).
+  - Déploiement : rebuild/push/`compose up --force-recreate frontend` ; `/health` (8080) et `/health` (8081) répondent 200 ; parcours complet revérifié en Playwright headless contre le conteneur déployé (région → ressources → bascule droits → retour accueil).
+  - Rien reporté sur le périmètre de cette itération : les 3 critères sont satisfaits. Les simplifications ❗️ (pas de niveau 1/2/3, contenu générique hors Île-de-France, pas de soignant nommé) sont assumées dès la planification, pas des reports.
+  - Ce que le harnais a bloqué : rien.
+  - **Modifications** :
+    - `frontend/src/app/parcours.ts` : ajoute `REGIONS`/`Region`, `contenuSoignant`, la branche `soignant` dans `construireFil`, le bloc `choix-region` ; généralise `choix-nav` en `NavOption[]` (`NavAction`, `optionsNavDemarche`, `OPTIONS_NAV_GENERIQUE`, `OPTIONS_NAV_SOIGNANT`).
+    - `frontend/src/app/parcours.test.ts` : 2 tests ajoutés, 2 adaptés à la forme `options`.
+    - `frontend/src/app/page.tsx` : état `region`, fonction `declencherNav` unique pour tous les boutons de navigation, rendu de `choix-region`.
+    - `e2e/demo.spec.ts` : étape « soignant » ajoutée.
+
 ## ⚠️ ✂️ Ce qui sort très probablement du temps de ce build
 
-Avec le temps restant concentré sur le parcours droits, le reste ne tient plus dans ce build. Liste ordonnée, à reprendre si du temps reste après l'itération 4 :
+Liste ordonnée, à reprendre si du temps reste après l'itération 5 :
 
-- Parcours Trouver un soignant – écran Région (filtre carte des filières de soins)
-- Parcours Trouver un soignant – écran Résultats (filière régionale, sans nom de soignant)
 - Parcours Je suis perdue – branches Fertilité, Douleur quotidienne, Opération
 - Lexique des termes techniques (accessible à chaque étape du parcours « je suis perdue »)
 - Écran « Qui êtes-vous ? » (choix de persona, sans connexion)
-- Intégration du RAG réel (remplacement des données en dur) sur le parcours droits en premier
+- Intégration du RAG réel (remplacement des données en dur) sur le parcours droits en premier, puis soignant
 - Situation sensible : contacts ENDOmind + alerte association
+- Niveau 1/2/3 de la filière de soins (question « avez-vous déjà consulté »), données réelles par région
 - Itération de stabilisation finale pour le pitch, quand le temps restant ne permet plus qu'une itération

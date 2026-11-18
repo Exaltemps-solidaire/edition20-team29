@@ -35,6 +35,17 @@ test("Démo : le cas passant", async ({ page }) => {
     await expect(page.getByRole("button", { name: /faire valoir mes droits/ })).toBeVisible();
   });
 
+  await test.step("Je cherche un·e soignant·e, choisis ma région et vois les ressources", async () => {
+    await page.getByText("soignant").click();
+    await expect(page.getByText("Dans quelle région")).toBeVisible();
+    await page.getByRole("button", { name: /Bretagne/ }).click();
+    await expect(
+      page.getByText("Centres de référence et de compétences endométriose · Bretagne")
+    ).toBeVisible();
+    await page.getByRole("button", { name: /Revenir à l'accueil/ }).click();
+    await expect(page.getByRole("button", { name: /faire valoir mes droits/ })).toBeVisible();
+  });
+
   await test.step("Même sur un écran pas encore construit, je peux revenir à l'accueil", async () => {
     await page.getByText("suis perdue").click();
     await expect(page.getByText("Écran à venir")).toBeVisible();

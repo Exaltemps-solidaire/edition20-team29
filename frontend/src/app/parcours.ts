@@ -15,6 +15,23 @@ export const PROFILS: { id: Profil; icone: string; label: string }[] = [
   { id: "independante", icone: "🔄", label: "Je suis travailleuse indépendante" },
 ];
 
+export const REGIONS = [
+  "Auvergne-Rhône-Alpes",
+  "Bourgogne-Franche-Comté",
+  "Bretagne",
+  "Centre-Val de Loire",
+  "Grand Est",
+  "Hauts-de-France",
+  "Île-de-France",
+  "Normandie",
+  "Nouvelle-Aquitaine",
+  "Occitanie",
+  "Pays de la Loire",
+  "Provence-Alpes-Côte d'Azur",
+  "DOM-TOM",
+] as const;
+export type Region = (typeof REGIONS)[number];
+
 export const ETAPES: { id: Demarche; icone: string; label: string }[] = [
   { id: "rien", icone: "🆕", label: "Je n'ai rien fait encore, par où commencer ?" },
   { id: "ald", icone: "📄", label: "J'ai déjà demandé l'ALD 31 (ou je veux le faire)" },
@@ -140,21 +157,63 @@ export function contenuDemarche(demarche: Demarche, profil: Profil): ContenuDema
   }
 }
 
+export type NavAction = "accueil" | "autre-demarche" | "choisir-entree" | "medecine-travail" | "voir-droits";
+export type NavOption = { action: NavAction; icone: string; label: string };
+
+function optionsNavDemarche(demarche: Demarche): NavOption[] {
+  const options: NavOption[] = [];
+  if (demarche === "rqth") {
+    options.push({ action: "medecine-travail", icone: "🏢", label: "Voir aussi : médecine du travail" });
+  }
+  options.push({ action: "autre-demarche", icone: "↩️", label: "Voir une autre démarche" });
+  options.push({ action: "accueil", icone: "🏠", label: "Revenir à l'accueil" });
+  return options;
+}
+
+const OPTIONS_NAV_GENERIQUE: NavOption[] = [
+  { action: "choisir-entree", icone: "↩️", label: "Choisir une autre entrée" },
+  { action: "accueil", icone: "🏠", label: "Revenir à l'accueil" },
+];
+
+const OPTIONS_NAV_SOIGNANT: NavOption[] = [
+  { action: "accueil", icone: "🏠", label: "Revenir à l'accueil" },
+  { action: "voir-droits", icone: "⚖️", label: "Je veux aussi faire valoir mes droits" },
+];
+
+function contenuSoignant(region: Region): { ressources: Ressource[] } {
+  return {
+    ressources: [
+      {
+        label: "🗺️ Carte des filières",
+        titre: `Centres de référence et de compétences endométriose · ${region}`,
+        desc: "Repérez les hôpitaux et centres partenaires de la filière de soins coordonnée par l'ARS dans votre région.",
+      },
+      {
+        label: "👥 Rencontre entre patientes",
+        titre: `Groupes de parole · ${region}`,
+        desc: "Animés par des bénévoles ENDOmind formées. Gratuits, ouverts à toutes : dates et lieux sur le site de l'association.",
+      },
+    ],
+  };
+}
+
 export type Bloc =
   | { type: "bot"; cle: string; texte: string }
   | { type: "user"; cle: string; texte: string }
   | { type: "choix-entree"; cle: string }
   | { type: "choix-profil"; cle: string }
   | { type: "choix-etapes"; cle: string }
+  | { type: "choix-region"; cle: string }
   | { type: "ressource"; cle: string; ressource: Ressource }
   | { type: "checklist"; cle: string; titre: string; items: string[] }
   | { type: "encadre"; cle: string; titre: string; texte: string }
-  | { type: "choix-nav"; cle: string; demarche?: Demarche };
+  | { type: "choix-nav"; cle: string; options: NavOption[] };
 
 export function construireFil(
   choix: Entree | null,
   profil: Profil | null,
-  demarche: Demarche | null
+  demarche: Demarche | null,
+  region: Region | null = null
 ): Bloc[] {
   const fil: Bloc[] = [
     {
@@ -174,13 +233,45 @@ export function construireFil(
   const entree = ENTREES.find((e) => e.id === choix)!;
   fil.push({ type: "user", cle: "user-entree", texte: entree.label });
 
+  if (choix === "soignant") {
+    fil.push({
+      type: "bot",
+      cle: "soignant-intro",
+      texte:
+        "ENDOmind recense les filières de soins régionales (réseaux de professionnel·les coordonné·es par l'ARS).\n\nDans quelle région vous trouvez-vous ?",
+    });
+
+    if (region === null) {
+      fil.push({ type: "choix-region", cle: "choix-region" });
+      return fil;
+    }
+
+    fil.push({ type: "user", cle: "user-region", texte: region });
+    fil.push({
+      type: "bot",
+      cle: "soignant-resultats-intro",
+      texte: `Voici les ressources ENDOmind pour ${region}.`,
+    });
+    contenuSoignant(region).ressources.forEach((ressource, i) => {
+      fil.push({ type: "ressource", cle: `soignant-ressource-${i}`, ressource });
+    });
+    fil.push({
+      type: "bot",
+      cle: "soignant-disclaimer",
+      texte:
+        "ENDOmind ne peut pas recommander ni évaluer un·e soignant·e en particulier. Si la liste semble incomplète pour votre département, écrivez à info@endomind.org",
+    });
+    fil.push({ type: "choix-nav", cle: "choix-nav-soignant", options: OPTIONS_NAV_SOIGNANT });
+    return fil;
+  }
+
   if (choix !== "droits") {
     fil.push({
       type: "bot",
       cle: "generique",
       texte: "Écran à venir — ce parcours sera construit dans une prochaine itération.",
     });
-    fil.push({ type: "choix-nav", cle: "choix-nav-generique" });
+    fil.push({ type: "choix-nav", cle: "choix-nav-generique", options: OPTIONS_NAV_GENERIQUE });
     return fil;
   }
 
@@ -230,6 +321,6 @@ export function construireFil(
       texte: contenu.encadre.texte,
     });
   }
-  fil.push({ type: "choix-nav", cle: `choix-nav-${demarche}`, demarche });
+  fil.push({ type: "choix-nav", cle: `choix-nav-${demarche}`, options: optionsNavDemarche(demarche) });
   return fil;
 }

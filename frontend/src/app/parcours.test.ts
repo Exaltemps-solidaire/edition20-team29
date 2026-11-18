@@ -17,7 +17,12 @@ describe("construireFil", () => {
   it("affiche la checklist et termine par la navigation quand une démarche est choisie", () => {
     const fil = construireFil("droits", "salariee", "ald");
     expect(fil.some((b) => b.type === "checklist" && b.titre === "Check-list · ALD 31")).toBe(true);
-    expect(fil.at(-1)).toEqual({ type: "choix-nav", cle: "choix-nav-ald", demarche: "ald" });
+    const nav = fil.at(-1);
+    expect(nav?.type).toBe("choix-nav");
+    expect(nav).toMatchObject({ cle: "choix-nav-ald" });
+    if (nav?.type === "choix-nav") {
+      expect(nav.options.map((o) => o.action)).toEqual(["autre-demarche", "accueil"]);
+    }
   });
 
   it("mène à l'écran générique pour les autres entrées, avec une navigation", () => {
@@ -27,7 +32,30 @@ describe("construireFil", () => {
       cle: "generique",
       texte: "Écran à venir — ce parcours sera construit dans une prochaine itération.",
     });
-    expect(fil.at(-1)).toEqual({ type: "choix-nav", cle: "choix-nav-generique" });
+    const nav = fil.at(-1);
+    expect(nav?.type).toBe("choix-nav");
+    if (nav?.type === "choix-nav") {
+      expect(nav.options.map((o) => o.action)).toEqual(["choisir-entree", "accueil"]);
+    }
+  });
+
+  it("s'arrête sur le choix de région tant qu'elle n'est pas choisie", () => {
+    const fil = construireFil("soignant", null, null);
+    expect(fil.at(-1)).toEqual({ type: "choix-region", cle: "choix-region" });
+  });
+
+  it("affiche les ressources régionales et termine par la navigation une fois la région choisie", () => {
+    const fil = construireFil("soignant", null, null, "Bretagne");
+    expect(
+      fil.some(
+        (b) => b.type === "ressource" && b.ressource.titre.includes("Bretagne")
+      )
+    ).toBe(true);
+    const nav = fil.at(-1);
+    expect(nav?.type).toBe("choix-nav");
+    if (nav?.type === "choix-nav") {
+      expect(nav.options.map((o) => o.action)).toEqual(["accueil", "voir-droits"]);
+    }
   });
 });
 

@@ -2,7 +2,18 @@
 
 import { Fragment, useState } from "react";
 import styles from "./page.module.css";
-import { ENTREES, ETAPES, PROFILS, construireFil, type Demarche, type Entree, type Profil } from "./parcours";
+import {
+  ENTREES,
+  ETAPES,
+  PROFILS,
+  REGIONS,
+  construireFil,
+  type Demarche,
+  type Entree,
+  type NavAction,
+  type Profil,
+  type Region,
+} from "./parcours";
 
 function texteMultiligne(texte: string) {
   return texte.split("\n").map((ligne, i, arr) => (
@@ -17,12 +28,36 @@ export default function Home() {
   const [choix, setChoix] = useState<Entree | null>(null);
   const [profil, setProfil] = useState<Profil | null>(null);
   const [demarche, setDemarche] = useState<Demarche | null>(null);
-  const fil = construireFil(choix, profil, demarche);
+  const [region, setRegion] = useState<Region | null>(null);
+  const fil = construireFil(choix, profil, demarche, region);
 
   function reinitialiser() {
     setChoix(null);
     setProfil(null);
     setDemarche(null);
+    setRegion(null);
+  }
+
+  function declencherNav(action: NavAction) {
+    switch (action) {
+      case "accueil":
+        reinitialiser();
+        break;
+      case "autre-demarche":
+        setDemarche(null);
+        break;
+      case "choisir-entree":
+        setChoix(null);
+        break;
+      case "medecine-travail":
+        setDemarche("travail");
+        break;
+      case "voir-droits":
+        setChoix("droits");
+        setProfil(null);
+        setDemarche(null);
+        break;
+    }
   }
 
   return (
@@ -92,6 +127,17 @@ export default function Home() {
                   ))}
                 </div>
               );
+            case "choix-region":
+              return (
+                <div key={bloc.cle} className={styles.choices}>
+                  {REGIONS.map((r) => (
+                    <button key={r} className={styles.choiceBtn} onClick={() => setRegion(r)}>
+                      <span className={styles.choiceIcon}>📍</span>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              );
             case "ressource":
               return (
                 <div key={bloc.cle} className={styles.resourceCard}>
@@ -120,27 +166,16 @@ export default function Home() {
             case "choix-nav":
               return (
                 <div key={bloc.cle} className={styles.choices}>
-                  {bloc.demarche === "rqth" && (
-                    <button className={styles.choiceBtn} onClick={() => setDemarche("travail")}>
-                      <span className={styles.choiceIcon}>🏢</span>
-                      Voir aussi : médecine du travail
+                  {bloc.options.map((opt) => (
+                    <button
+                      key={opt.action}
+                      className={styles.choiceBtn}
+                      onClick={() => declencherNav(opt.action)}
+                    >
+                      <span className={styles.choiceIcon}>{opt.icone}</span>
+                      {opt.label}
                     </button>
-                  )}
-                  {bloc.demarche ? (
-                    <button className={styles.choiceBtn} onClick={() => setDemarche(null)}>
-                      <span className={styles.choiceIcon}>↩️</span>
-                      Voir une autre démarche
-                    </button>
-                  ) : (
-                    <button className={styles.choiceBtn} onClick={() => setChoix(null)}>
-                      <span className={styles.choiceIcon}>↩️</span>
-                      Choisir une autre entrée
-                    </button>
-                  )}
-                  <button className={styles.choiceBtn} onClick={reinitialiser}>
-                    <span className={styles.choiceIcon}>🏠</span>
-                    Revenir à l&apos;accueil
-                  </button>
+                  ))}
                 </div>
               );
           }
